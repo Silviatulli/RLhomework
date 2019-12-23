@@ -59,13 +59,13 @@ def epsilon_greedy(average_estimate, bandits, number_bandit_choices, epsilon):
 
 #We apply the UCB policy that chooses the action with the highest margin of error => the more you choose one action the least it chooses it
 def UCB(average_estimate, bandits, number_bandit_choices, c, potentials, i): #c is a constant
-    choice = np.random.choice(np.argwhere(potentials == np.amax(potentials)).flatten()) #flatten the results
+    choice = np.random.choice(np.argwhere(potentials == np.amax(potentials)).flatten()) #flatten the results #instead of putting the average estimate I put the potentials
     reward = bandits[choice].give_reward()
     number_bandit_choices[choice] += 1
     average_estimate[choice] = (number_bandit_choices[choice]-1)/number_bandit_choices[choice]*average_estimate[choice]+1/number_bandit_choices[choice]*reward
     for j in range(len(bandits)):
         if number_bandit_choices[j] > 0:
-            potentials[j] = average_estimate[j]+c*np.sqrt((np.log(i+1))/number_bandit_choices[j])
+            potentials[j] = average_estimate[j]+c*np.sqrt((np.log(i+1))/number_bandit_choices[j])#i is the time, j is all the bandits (the positions of the bandits)
     return reward, number_bandit_choices, average_estimate, potentials
 
 fig = plt.figure()
@@ -134,11 +134,11 @@ def question_five(c=np.sqrt(2)):
             reward, number_bandit_choices, average_estimate, potentials = UCB(average_estimate, bandits, number_bandit_choices, c, potentials, i)
             rewards.append(reward)
         average_rewards = np.multiply((j-1)/j,average_rewards)+np.multiply(1/j,rewards)
-    plt.plot(average_rewards, label='ucb')
+    plt.plot(average_rewards, label='ucb c=sqrt(2)')
 question_five()
 plt.xlabel('number of trial')
-plt.ylabel('average reward')
-plt.title('average reward for each strategy')
+plt.ylabel('averaged reward')
+plt.title('Comparison of the average reward in respect to the policy')
 plt.legend()
 fig.savefig('ex1'+'.png')
 
@@ -149,7 +149,7 @@ def plot(average_rewards, label, title, filename):
 	for i in range(average_rewards):
 		ax.plot(average_rewards[i], label = label[i])
 	plt.xlabel('number of trial')
-	plt.ylabel('averaged reward')
+	plt.ylabel('average reward')
 	plt.title(title)
 	ax.legend()
 	plt.legend()
