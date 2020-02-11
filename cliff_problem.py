@@ -7,7 +7,6 @@ rows = 4
 start = (rows-1,0)
 goal = (rows-1, cols-1)
 
-num_episodes = 500
 
 
 class Grid:
@@ -16,14 +15,14 @@ class Grid:
         self.cols = cols
         self.rows = rows
 
-    # The following function define the start point for each iteration
+    # Define the starting point for each iteration
     def reset(self):
         self.X = 0
         self.Y = 0
         self.state = np.matrix([self.X, self.Y])
         return self.state
 
-    # The following function define the possible agent's actions
+    # Define the agent's action
     def step(self, action):
         self.ACTIONS = ["Up", "Down", "Left", "Right"]
         action = self.ACTIONS[action]
@@ -68,7 +67,6 @@ class Agent:
     def __init__(self, agent_type = "SARSA"):
         self.agent_type = agent_type
         self._build_model()
-        # factors that influence the agent's learning
         self.learningrate = 0.5 # learning rate
         self.discount = 1 # discount factor
         self.epsilon = 0.15 #epsilon greedy
@@ -114,7 +112,7 @@ class Agent:
             - self.predict(self.state)[self.action])
         self.state = new_state
         self.action = new_action
-        return new_state, reward, done, self.epsilon
+        return new_state, reward, done, self.action, self.epsilon
 
     def _train_step_qlearning(self, env):
         self.action = self._choose_action(self.state)
@@ -125,47 +123,53 @@ class Agent:
             (reward + self.discount*np.amax(self.predict(new_state)) \
             - self.predict(self.state)[self.action])
         self.state = new_state
-        return new_state, reward, done, self.epsilon
-
+        return new_state, reward, done, self.action, self.epsilon
 
 
 if __name__ == "__main__":
     agent_types = ["SARSA","Q-Learning"]
-    num_runs = 500
-    epi_reward_average = {}
-    epi_reward_average[0] = np.zeros([num_episodes])#average reward for SARSA
-    epi_reward_average[1] = np.zeros([num_episodes])#average reward for Q-Learning
+    num_runs = 10000
+    num_episodes = 500
+    episode_reward_average = {}
+    episode_reward_average[0] = np.zeros([num_episodes])#average reward for SARSA
+    episode_reward_average[1] = np.zeros([num_episodes])#average reward for Q-Learning
+
+    
     # Train
     for j in range(num_runs):
         print("Run #" + str(j))
-        epi_reward = {}
+        episode_reward = {}
         for i in range(len(agent_types)):
             env = Grid()
             agent = Agent(agent_types[i])
-            epi_reward[i] = np.zeros([num_episodes])
+            episode_reward[i] = np.zeros([num_episodes])
             for e in range(num_episodes):
                 state = agent.init_episode(env)
                 # Here the plot can be added for the initial state
                 done = False
                 while not done:
-                    state, reward, done, epsilon = agent.train_step(env)
-                    epi_reward[i][e] += reward
+                    state, reward, done, action, epsilon = agent.train_step(env)
+                    episode_reward[i][e] += reward
             if i == 0:
-                epi_reward_average[0] = np.add(epi_reward_average[0], epi_reward[i])
+                episode_reward_average[0] = np.add(episode_reward_average[0], episode_reward[i])
+                print(action)
             else:
-                epi_reward_average[1] = np.add(epi_reward_average[1], epi_reward[i])
+                episode_reward_average[1] = np.add(episode_reward_average[1], episode_reward[i])
+                print(action)
 
     # Get the average
-    epi_reward_average[0] = np.true_divide(epi_reward_average[0], num_runs)
-    epi_reward_average[1] = np.true_divide(epi_reward_average[1], num_runs)
+    episode_reward_average[0] = np.true_divide(episode_reward_average[0], num_runs)
+    episode_reward_average[1] = np.true_divide(episode_reward_average[1], num_runs)
+    print("Total reward for SARSA:", episode_reward_average[0],"N:", num_runs)
+    print("Total reward for Q-learning:", episode_reward_average[1],"N:", num_runs)
 
     # Plot Rewards
-    fig, ax = plt.subplots()
-    fig.suptitle('Rewards')
-    for j in range(len(epi_reward_average)):
-        ax.plot(range(len(epi_reward_average[j])), epi_reward_average[j], label=agent_types[j])
-    legend = ax.legend(loc='lower right', shadow=True, fontsize='x-large')
+    #fig, ax = plt.subplots()
+    #fig.suptitle('Rewards')
+    plt.plot(episode_reward_average[1], color='blue', label='qlearning')
+    plt.plot(episode_reward_average[0], color='orange', label='sarsa')
     plt.xlabel("Episode")
     plt.ylabel("Reward")
     plt.ylim(-125, 0)
+    plt.legend() 
     plt.show()
